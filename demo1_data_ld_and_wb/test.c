@@ -5,39 +5,39 @@
 
 #include "util.h"
 
-int main(int argc, char *argv[]) {
+int main(int argc, char *argv[])
+{
 
-    size_t gx, gy;		//Var für Bild 图像尺寸  size_t = unsigned char
-	png_bytep gbild_;	//图像数据首地址 unsigned char *
-	readImageData("ggray.png", &gbild_, &gx, &gy);	//Bild lesen 读图
+    size_t gx, gy;                                 // Var für Bild 图像尺寸  size_t = unsigned char
+    png_bytep gbild_;                              //图像数据首地址 unsigned char *
+    readImageData("ggray.png", &gbild_, &gx, &gy); // Bild lesen 读图
 
-	unsigned char **gbild = malloc(sizeof(char *) * gy);	//定义二维数据
-	for(int i = 0 ; i < gy ; i++)
-	{
-		gbild[i] = gbild_ + i * gx; 
-	}
+    unsigned char **gbild = malloc(sizeof(char *) * gy); //定义二维数据
+    for (int i = 0; i < gy; i++)
+    {
+        gbild[i] = gbild_ + i * gx;
+    }
 
-	//二维数组的使用
-	unsigned char *gbild_out_ = malloc(sizeof(char) * (gx * gy + 16)); //a[5 + 列数 * 6]
-	unsigned char **gbild_out = malloc(sizeof(char * ) * gy);
-	for(int i = 0 ; i < gy ; i++)
-	{
-		gbild_out[i] = gbild_out_ + i * gx;		//gbild_out[1][3]
-	}
+    //二维数组的使用
+    unsigned char *gbild_out_ = malloc(sizeof(char) * (gx * gy + 16)); // a[5 + 列数 * 6]
+    unsigned char **gbild_out = malloc(sizeof(char *) * gy);
+    for (int i = 0; i < gy; i++)
+    {
+        gbild_out[i] = gbild_out_ + i * gx; // gbild_out[1][3]
+    }
 
+    uint8x16_t regin, mitt; //定义NEON向量
+    for (int i = 0; i < gy; i++)
+    {
+        for (int ii = 0; ii < gx; ii += 16)
+        {
+            regin = vld1q_u8(&gbild[i][ii]); //数据读取
 
-	uint8x16_t regin, mitt;	//定义NEON向量
-	for(int i = 0 ; i < gy ; i++)
-	{
-		for(int ii = 0 ; ii < gx ; ii += 16)
-		{
-			regin = vld1q_u8(&gbild[i][ii]);	//数据读取
+            mitt = vdupq_n_u8(50);
+            regin = vqsubq_u8(regin, mitt);
 
-			mitt = vdupq_n_u8(50);
-			regin = vqsubq_u8(regin, mitt);
-			
-			vst1q_u8(&gbild_out[i][ii], regin);	//数据回写
-		}
-	}
-	writeImageData("out.png", gbild_out_, gx, gy, 8);	//制作PNG图
+            vst1q_u8(&gbild_out[i][ii], regin); //数据回写
+        }
+    }
+    writeImageData("out.png", gbild_out_, gx, gy, 8); //制作PNG图
 }
